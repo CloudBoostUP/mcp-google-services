@@ -1,0 +1,114 @@
+{
+  "google_apis": {
+    "credentials_path": "config/credentials.json",
+    "enabled_services": [
+      "gmail",
+      "drive", 
+      "calendar",
+      "sheets",
+      "docs",
+      "photos",
+      "contacts"
+    ],
+    "rate_limits": {
+      "gmail": 1000,
+      "drive": 1000,
+      "calendar": 1000,
+      "sheets": 100,
+      "docs": 100,
+      "photos": 1000,
+      "contacts": 1000
+    }
+  },
+  "services": {
+    "gmail": {
+      "backup_folder": "backups/gmail",
+      "include_labels": ["INBOX", "SENT"],
+      "exclude_labels": ["SPAM", "TRASH"],
+      "max_messages_per_batch": 100,
+      "date_range_days": 365
+    },
+    "drive": {
+      "backup_folder": "backups/drive",
+      "include_folders": ["My Drive"],
+      "exclude_folders": ["Trash"],
+      "max_file_size_mb": 100,
+      "include_shared": false
+    },
+    "calendar": {
+      "backup_folder": "backups/calendar",
+      "include_calendars": ["primary"],
+      "exclude_calendars": [],
+      "date_range_days": 365,
+      "include_recurring": true
+    },
+    "sheets": {
+      "backup_folder": "backups/sheets",
+      "include_spreadsheets": [],
+      "exclude_spreadsheets": [],
+      "export_formats": ["csv", "xlsx", "json"]
+    },
+    "docs": {
+      "backup_folder": "backups/docs",
+      "include_documents": [],
+      "exclude_documents": [],
+      "export_formats": ["pdf", "docx", "txt"]
+    },
+    "photos": {
+      "backup_folder": "backups/photos",
+      "include_albums": [],
+      "exclude_albums": [],
+      "max_photo_size_mb": 50,
+      "include_metadata": true
+    },
+    "contacts": {
+      "backup_folder": "backups/contacts",
+      "include_groups": [],
+      "exclude_groups": [],
+      "export_formats": ["vcf", "csv", "json"]
+    }
+  },
+  "schedule": {
+    "enabled": true,
+    "default_cron": "0 2 * * *",
+    "timezone": "UTC",
+    "services": {
+      "gmail": "0 2 * * *",
+      "drive": "0 3 * * *",
+      "calendar": "0 4 * * 0",
+      "sheets": "0 5 * * 1",
+      "docs": "0 6 * * 2",
+      "photos": "0 7 * * 3",
+      "contacts": "0 8 * * 4"
+    }
+  },
+  "export": {
+    "default_format": "json",
+    "compression": true,
+    "encryption": false,
+    "encryption_key": "",
+    "formats": {
+      "gmail": ["mbox", "json", "eml"],
+      "drive": ["zip", "json"],
+      "calendar": ["ics", "json"],
+      "sheets": ["csv", "xlsx", "json"],
+      "docs": ["pdf", "docx", "txt", "json"],
+      "photos": ["zip", "json"],
+      "contacts": ["vcf", "csv", "json"]
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/mcp-server.log",
+    "max_size_mb": 10,
+    "backup_count": 5
+  },
+  "server": {
+    "host": "localhost",
+    "port": 3000,
+    "debug": false,
+    "cors_origins": ["*"],
+    "max_request_size_mb": 100
+  }
+}

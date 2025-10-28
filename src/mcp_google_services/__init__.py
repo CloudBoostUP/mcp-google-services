@@ -1,0 +1,5 @@
+"""Google Services MCP Server - Core Package."""
+
+__version__ = "1.0.0"
+__author__ = "CloudBoostUP Team"
+__email__ = "support@cloudboostup.com"
