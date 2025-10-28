@@ -219,7 +219,6 @@ cp config/config.example.json config/config.json
 
 - **GitHub Issues**: For bugs and feature requests
 - **Discussions**: For questions and general discussion
-- **Email**: support@cloudboostup.com
 - **Website**: [cloudboostup.com](https://cloudboostup.com)
 
 ## 🏆 Recognition

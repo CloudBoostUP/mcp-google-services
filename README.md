@@ -634,7 +634,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Documentation**: [GitHub Wiki](https://github.com/CloudBoostUP/mcp-google-services/wiki)
 - **Issues**: [GitHub Issues](https://github.com/CloudBoostUP/mcp-google-services/issues)
-- **Email**: support@cloudboostup.com
+- **Email**: www.cloudboostup.com
 - **Website**: [cloudboostup.com](https://cloudboostup.com)
 
 ## 🙏 Acknowledgments
