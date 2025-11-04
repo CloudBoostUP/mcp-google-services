@@ -1,82 +1,29 @@
-# Quick Setup Guide - Google Services MCP Server
+# Setup Guide - Google Services MCP Server
 
-## One-Time Authentication Setup
+> **⚠️ This file is deprecated. Please refer to the main documentation for the most up-to-date setup instructions.**
 
-### Step 1: Authenticate with Google (Similar to `az login`)
+## 📚 Current Documentation
 
-Run this command in your terminal:
+For setup instructions, please see:
 
-```bash
-gcloud auth application-default login
-```
+- **[README.md](README.md)** - Quick start guide with installation and authentication
+- **[docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)** - Detailed authentication setup guide
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
-This will:
-- Open your browser automatically
-- Ask you to sign in with your Google account
-- Grant permissions for Gmail API access
-- Store credentials securely (no file management needed!)
+## Quick Reference
 
-### Step 2: Verify Authentication
+### Gmail API Setup
 
-Test that authentication worked:
+**Important:** Gmail API requires OAuth 2.0 credentials file. `gcloud auth application-default login` does not support Gmail scopes.
 
-```bash
-gcloud auth application-default print-access-token
-```
+1. **Download OAuth 2.0 credentials** from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. **Place credentials** in `config/credentials.json`
+3. **Enable Gmail API** in your Google Cloud project
+4. **First use** will prompt for OAuth consent
 
-If you see a token, you're ready to go!
+See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for detailed instructions.
 
-### Step 3: Test in Cursor
+## Why This File Exists
 
-Now you can use the MCP server in Cursor:
-
-- "List my Gmail labels"
-- "List my Gmail messages"
-- "Backup my Gmail messages"
-- "Export my Gmail to JSON"
-
-## That's It!
-
-No credentials files to manage, no manual token handling. Just like `az login` for Azure DevOps or AWS CLI profiles.
-
-The MCP server will automatically use your Google Cloud SDK credentials.
-
-## Troubleshooting
-
-### "gcloud: command not found"
-
-Google Cloud SDK is installed but not in PATH. Add to your shell profile:
-
-```bash
-# For zsh
-echo 'export PATH=/opt/homebrew/share/google-cloud-sdk/bin:$PATH' >> ~/.zshrc
-source ~/.zshrc
-
-# For bash
-echo 'export PATH=/opt/homebrew/share/google-cloud-sdk/bin:$PATH' >> ~/.bash_profile
-source ~/.bash_profile
-```
-
-### "Permission denied" or "API not enabled"
-
-1. Enable Gmail API in Google Cloud Console:
-   - Go to https://console.cloud.google.com/
-   - Navigate to APIs & Services > Library
-   - Search for "Gmail API"
-   - Click "Enable"
-
-2. Re-authenticate:
-   ```bash
-   gcloud auth application-default login
-   ```
-
-### Switching Accounts
-
-To use a different Google account:
-
-```bash
-gcloud auth application-default login
-```
-
-This will prompt for a new account login.
+This file is kept for historical reference. The setup process has been updated and consolidated into the main documentation files listed above.
 
