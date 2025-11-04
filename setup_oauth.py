@@ -62,8 +62,10 @@ Time required: ~3-5 minutes
     print("   - App name: 'Gmail MCP Server' (or your choice)")
     print("   - User support email: Your email")
     print("   - Developer contact: Your email")
-    print("4. Click 'Save and Continue' through scopes (we'll add them)")
-    print("5. Add yourself as a test user (if using External type)")
+    print("4. Click 'Save and Continue' through scopes")
+    print("5. Add scopes: Click 'ADD OR REMOVE SCOPES' and add:")
+    print("   - https://www.googleapis.com/auth/gmail.readonly")
+    print("   - https://www.googleapis.com/auth/gmail.metadata")
     print("6. Click 'Save and Continue' to finish")
     
     response = input("\nOpen OAuth consent screen? (y/n): ")
@@ -72,6 +74,26 @@ Time required: ~3-5 minutes
         print("\n✅ Browser opened!")
     
     input("\nPress Enter when OAuth consent screen is configured...")
+    
+    print_step(3.5, "Add Yourself as a Test User (IMPORTANT!)")
+    print("\n⚠️  CRITICAL STEP: Your app is in 'Testing' mode, so you MUST add yourself as a test user!")
+    print("\n1. On the OAuth consent screen, scroll down to 'Test users' section")
+    print("2. Click '+ ADD USERS'")
+    print("3. Enter your Gmail address (the one you want to use with the MCP server)")
+    print("4. Click 'ADD'")
+    print("\n💡 This is required! Without this, you'll get 'access_denied' errors.")
+    
+    response = input("\nOpen test users section? (y/n): ")
+    if response.lower() == 'y':
+        webbrowser.open("https://console.cloud.google.com/apis/credentials/consent")
+        print("\n✅ Browser opened! Scroll down to 'Test users' section.")
+    
+    test_user_email = input("\nEnter your Gmail address (to verify you added it): ").strip()
+    if test_user_email:
+        print(f"\n✅ Make sure '{test_user_email}' is added as a test user!")
+        print("   If you haven't added it yet, do it now before continuing.")
+    
+    input("\nPress Enter when you've added yourself as a test user...")
     
     print_step(4, "Create OAuth Client ID")
     print("\n1. Go to: APIs & Services > Credentials")
@@ -161,10 +183,21 @@ Next steps:
   3. Grant Gmail permissions (one-time only)
   4. Credentials will be stored securely for future use
 
+⚠️  IMPORTANT REMINDER:
+   Make sure you added yourself as a test user in the OAuth consent screen!
+   If you see "access_denied" errors, go back and add your email as a test user.
+
 The OAuth flow will:
   • Reuse your existing Google login (if already logged in)
   • Only ask for Gmail permissions
   • Store credentials securely (no need to re-authenticate)
+
+Troubleshooting:
+  If you get "access_denied" error:
+  1. Go to: https://console.cloud.google.com/apis/credentials/consent
+  2. Scroll to "Test users" section
+  3. Add your Gmail address as a test user
+  4. Try again!
 
 Enjoy using the Gmail MCP server! 🎉
 """)
