@@ -8,27 +8,21 @@ This guide helps you resolve common issues with the Google Services MCP Server.
 
 **Symptoms:**
 - Tool execution fails with authentication error
-- Error message suggests running `gcloud auth application-default login`
+- Error message indicates no credentials available
 
 **Causes:**
-- No Application Default Credentials configured
 - OAuth credentials file not found
 - Credentials file in wrong location
+- Gmail API requires OAuth credentials (not ADC)
 
 **Solutions:**
 
-1. **Use Application Default Credentials (Recommended):**
-   ```bash
-   gcloud auth application-default login
-   ```
-   **Note:** For Gmail API, you'll still need OAuth credentials file (see solution 2).
-
-2. **Set Up OAuth Credentials File:**
+1. **Set Up OAuth Credentials File (Required for Gmail API):**
    - Download OAuth 2.0 credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Create OAuth client ID (Desktop app type)
    - Place in `config/credentials.json`
    - Ensure file has correct permissions
-
-3. **Verify Credentials File Location:**
+   
    ```bash
    # Check if file exists
    ls -la config/credentials.json
@@ -37,6 +31,17 @@ This guide helps you resolve common issues with the Google Services MCP Server.
    chmod 600 config/credentials.json
    ```
 
+2. **Verify Credentials File Location:**
+   ```bash
+   # Verify file exists
+   ls -la config/credentials.json
+   
+   # Verify file format (should be JSON)
+   head -5 config/credentials.json
+   ```
+
+**Important:** `gcloud auth application-default login` does NOT work for Gmail API because it doesn't support Gmail scopes. You must use OAuth credentials file.
+
 ### Error: "Gmail API scopes are required but not present"
 
 **Symptoms:**
@@ -44,20 +49,28 @@ This guide helps you resolve common issues with the Google Services MCP Server.
 - Error mentions missing Gmail scopes
 
 **Causes:**
-- Application Default Credentials don't include Gmail scopes
-- `gcloud auth application-default login` doesn't support Gmail scopes
+- Attempting to use Application Default Credentials (ADC) which don't support Gmail scopes
+- `gcloud auth application-default login` does NOT support Gmail scopes
+- OAuth credentials file not properly configured
 
 **Solutions:**
 
-1. **Use OAuth Credentials File:**
-   - Download OAuth 2.0 credentials from Google Cloud Console
+1. **Use OAuth Credentials File (Required):**
+   - Gmail API **requires** OAuth 2.0 credentials file
+   - Download OAuth 2.0 credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Create OAuth client ID (Desktop app type)
    - Place in `config/credentials.json`
    - First use will prompt for OAuth consent with Gmail scopes
 
-2. **Verify OAuth Consent:**
+2. **Verify OAuth Consent Screen:**
    - Ensure Gmail API is enabled in Google Cloud Project
-   - Check OAuth consent screen is configured
+   - Configure OAuth consent screen with Gmail scopes
+   - Add scopes: `https://www.googleapis.com/auth/gmail.readonly`
    - Verify test users are added (if app is in testing mode)
+
+3. **Re-authenticate:**
+   - Delete stored tokens: `rm config/tokens.json` (if exists)
+   - Run MCP server again to trigger OAuth flow
 
 ### Error: "Permission denied" or "403 Forbidden"
 
