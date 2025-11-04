@@ -56,23 +56,9 @@ pip install -r requirements.txt
 
 ### 3. Set Up Google API Credentials
 
-Choose one of these authentication methods:
+**Gmail API requires OAuth 2.0 credentials file.** `gcloud auth application-default login` does not support Gmail scopes and cannot be used for Gmail API access.
 
-#### Option A: Application Default Credentials (Recommended - Similar to `az login`)
-
-```bash
-# Install Google Cloud SDK (if not already installed)
-# macOS: brew install google-cloud-sdk
-# Windows: Download from https://cloud.google.com/sdk/docs/install
-# Linux: curl https://sdk.cloud.google.com | bash
-
-# Authenticate once
-gcloud auth application-default login
-```
-
-**Note**: For Gmail API access, you'll still need OAuth credentials file (see Option B) because `gcloud auth application-default login` doesn't support Gmail scopes.
-
-#### Option B: OAuth 2.0 Credentials File
+#### OAuth 2.0 Credentials File (Required)
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one

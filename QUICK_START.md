@@ -1,16 +1,27 @@
 # Quick Start - Google Services MCP Server
 
-## 🚀 2-Step Setup
+## 🚀 Setup Steps
 
-### Step 1: Authenticate (One Command)
+### Step 1: Create OAuth Credentials
 
-```bash
-gcloud auth application-default login
-```
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create OAuth client ID (Desktop app)
+3. Download JSON file
+4. Place in `config/credentials.json`
 
-This opens your browser - sign in with your Google account and you're done!
+### Step 2: Enable Gmail API
 
-### Step 2: Use in Cursor
+1. Go to [Google Cloud Console - APIs Library](https://console.cloud.google.com/apis/library)
+2. Search for "Gmail API"
+3. Click "Enable"
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Go to [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
+2. Add your Gmail address as a test user (required!)
+3. Add scope: `https://www.googleapis.com/auth/gmail.readonly`
+
+### Step 4: Use in Cursor
 
 Just ask Cursor:
 - "List my Gmail labels"
@@ -18,13 +29,13 @@ Just ask Cursor:
 - "Backup my Gmail messages"
 - "Export my Gmail to JSON"
 
+On first use, the browser will open for OAuth consent.
+
 ## ✅ That's It!
 
-No credentials files, no manual setup. Just like `az login` for Azure DevOps.
+After first-time OAuth consent, credentials are stored securely and you won't need to authenticate again.
 
-The MCP server automatically uses your Google Cloud SDK credentials.
+## 📚 For Detailed Instructions
 
-## 🔧 If You See "Authentication Required"
-
-The MCP server will show a helpful message with the exact command to run. Just copy and paste it into your terminal!
+See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for complete setup guide.
 

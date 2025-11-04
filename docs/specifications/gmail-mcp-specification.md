@@ -34,7 +34,8 @@ mcp_google_services/
 
 **Required Scopes:**
 - `https://www.googleapis.com/auth/gmail.readonly` - Read-only access
-- `https://www.googleapis.com/auth/gmail.metadata` - Metadata access
+
+**Note:** `gmail.metadata` scope does not support query parameters, so we use `gmail.readonly` for full functionality.
 
 **Token Management:**
 - Secure token storage using keyring
@@ -47,8 +48,7 @@ class GmailAuth:
     def __init__(self, credentials_path: str):
         self.credentials_path = credentials_path
         self.scopes = [
-            'https://www.googleapis.com/auth/gmail.readonly',
-            'https://www.googleapis.com/auth/gmail.metadata'
+            'https://www.googleapis.com/auth/gmail.readonly'
         ]
     
     def authenticate(self) -> Credentials:
