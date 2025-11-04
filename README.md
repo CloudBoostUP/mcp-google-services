@@ -315,7 +315,7 @@ pytest --cov=mcp_google_services
 ### Authentication Issues
 
 **Error: "No authentication credentials found"**
-- **Solution**: Run `gcloud auth application-default login` or set up OAuth credentials file
+- **Solution**: Set up OAuth credentials file (required for Gmail API)
 
 **Error: "Gmail API scopes are required but not present"**
 - **Solution**: Download OAuth 2.0 credentials from Google Cloud Console and place in `config/credentials.json`

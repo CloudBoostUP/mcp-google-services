@@ -24,7 +24,7 @@ The Gmail API integration requires the following OAuth 2.0 scopes:
 ### Authentication Methods
 
 1. **Application Default Credentials (ADC)**: 
-   - Uses `gcloud auth application-default login`
+   - Uses OAuth 2.0 credentials file (required for Gmail API)
    - Automatically manages token refresh
    - Stores credentials securely in system keyring
 
