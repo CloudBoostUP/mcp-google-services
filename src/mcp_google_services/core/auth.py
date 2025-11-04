@@ -143,6 +143,12 @@ class AuthManager:
     def _authenticate_user(self, user_id: str, scopes: List[str]) -> Credentials:
         """Perform OAuth 2.0 authentication flow.
 
+        This will:
+        1. Open your browser automatically
+        2. Detect if you're already logged in to Google (reuses session!)
+        3. Request Gmail permissions
+        4. Store credentials securely for future use
+
         Args:
             user_id: User email address
             scopes: OAuth scopes to request
@@ -154,17 +160,28 @@ class AuthManager:
             raise FileNotFoundError(
                 f"Credentials file not found: {self.credentials_path}\n"
                 "Please download OAuth 2.0 credentials from Google Cloud Console "
-                "and place them in the config directory."
+                "and place them in the config directory.\n\n"
+                "Quick setup:\n"
+                "1. Go to https://console.cloud.google.com/apis/credentials\n"
+                "2. Create OAuth client ID (Desktop app)\n"
+                "3. Download JSON and save as config/credentials.json\n"
+                "4. Enable Gmail API in APIs & Services > Library"
             )
 
         flow = InstalledAppFlow.from_client_secrets_file(
             str(self.credentials_path), scopes
         )
         
-        # Run local server flow
-        credentials = flow.run_local_server(port=0)
+        # Run local server flow - this will:
+        # - Open browser automatically
+        # - Reuse existing Google login session if you're already logged in
+        # - Only prompt for Gmail permissions
+        credentials = flow.run_local_server(
+            port=0,
+            open_browser=True
+        )
         
-        # Save credentials for future use
+        # Save credentials for future use (stored securely, no need to re-authenticate)
         self._save_credentials(user_id, credentials)
         
         return credentials
