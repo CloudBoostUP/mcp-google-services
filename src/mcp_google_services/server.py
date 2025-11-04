@@ -149,13 +149,30 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         # Authenticate
         try:
             credentials = auth_manager.get_credentials(user_id)
-        except FileNotFoundError:
-            return [
-                TextContent(
-                    type="text",
-                    text=f"Error: OAuth credentials not found. Please set up credentials at config/credentials.json"
-                )
-            ]
+        except FileNotFoundError as e:
+            error_msg = str(e)
+            # Make error message more helpful
+            if "gcloud auth application-default login" in error_msg:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"🔐 Authentication Required\n\n"
+                             f"Please run this command in your terminal:\n\n"
+                             f"  gcloud auth application-default login\n\n"
+                             f"This will:\n"
+                             f"  • Open your browser for Google sign-in\n"
+                             f"  • Store credentials securely (no file management needed!)\n"
+                             f"  • Work automatically with the MCP server\n\n"
+                             f"After authentication, try your request again."
+                    )
+                ]
+            else:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"Error: {error_msg}"
+                    )
+                ]
         except Exception as e:
             return [
                 TextContent(
