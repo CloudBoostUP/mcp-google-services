@@ -1,92 +1,143 @@
 # Authentication Guide - Google Services MCP Server
 
-## Quick Setup (Similar to `az login`)
+## Overview
 
-The easiest way to authenticate is using **Google Cloud SDK**, similar to how Azure DevOps uses `az login`:
+The Google Services MCP Server requires OAuth 2.0 authentication for Gmail API access. This guide explains how to set up authentication.
 
-### Step 1: Install Google Cloud SDK
+## Gmail API Authentication
 
-**macOS:**
+**Important:** Gmail API requires OAuth 2.0 credentials file. `gcloud auth application-default login` does not support Gmail scopes and cannot be used for Gmail API access.
+
+### Step 1: Create OAuth 2.0 Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable **Gmail API**:
+   - Navigate to "APIs & Services" > "Library"
+   - Search for "Gmail API"
+   - Click "Enable"
+4. Create OAuth 2.0 Credentials:
+   - Navigate to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Choose "Desktop app" as application type
+   - Download the JSON file
+
+### Step 2: Configure OAuth Consent Screen
+
+1. Navigate to "APIs & Services" > "OAuth consent screen"
+2. Fill in required information:
+   - User type: External (for personal use) or Internal (for Google Workspace)
+   - App name: e.g., "Gmail MCP Server"
+   - User support email: Your email
+   - Developer contact: Your email
+3. Add scopes:
+   - `https://www.googleapis.com/auth/gmail.readonly`
+4. Add test users (if app is in "Testing" mode):
+   - Add your Gmail address as a test user
+
+### Step 3: Place Credentials File
+
+Place the downloaded OAuth credentials JSON file in the project:
+
 ```bash
-brew install google-cloud-sdk
+mkdir -p config
+cp ~/Downloads/your-credentials.json config/credentials.json
 ```
 
-**Windows:**
-```powershell
-# Download from: https://cloud.google.com/sdk/docs/install
-```
+**Security Note:** Never commit `config/credentials.json` to git. It's already in `.gitignore`.
 
-**Linux:**
-```bash
-curl https://sdk.cloud.google.com | bash
-exec -l $SHELL
-```
+### Step 4: First-Time Authentication
 
-### Step 2: Authenticate (One-time setup)
+On first use, the MCP server will:
+1. Detect the OAuth credentials file
+2. Open your browser automatically
+3. Prompt for Google account sign-in
+4. Request Gmail API permissions
+5. Store tokens securely (using keyring)
 
-```bash
-gcloud auth application-default login
-```
+You only need to do this once - tokens are stored and automatically refreshed.
 
-This will:
-- Open your browser
-- Ask you to sign in with your Google account
-- Grant permissions for Gmail API
-- Store credentials locally (no manual file management needed!)
+## Authentication Methods
 
-### Step 3: Verify Authentication
+### Primary: OAuth Credentials File (Required for Gmail)
 
-```bash
-gcloud auth application-default print-access-token
-```
-
-If you see a token, authentication is working!
-
-## How It Works
-
-The MCP server automatically uses **Application Default Credentials (ADC)** when available, which means:
-
-✅ **No credentials file needed** - Just run `gcloud auth application-default login` once  
-✅ **Automatic token refresh** - Credentials are managed by Google Cloud SDK  
-✅ **Same workflow as Azure DevOps** - Simple CLI command, no manual file handling  
-✅ **Secure** - Credentials stored in your system keyring  
-
-## Alternative: OAuth Credentials File
-
-If you prefer not to use Google Cloud SDK, you can use OAuth credentials file:
+This is the **only** method that works for Gmail API:
 
 1. Download OAuth 2.0 credentials from Google Cloud Console
 2. Place in `config/credentials.json`
-3. The server will prompt for OAuth consent on first use
+3. First use will prompt for OAuth consent
+4. Tokens stored securely using keyring
 
-## Switching Accounts
+### Application Default Credentials (ADC)
 
-To switch Google accounts:
+**Note:** `gcloud auth application-default login` does **NOT** work for Gmail API because it doesn't support Gmail scopes. ADC can be used for other Google services, but Gmail requires OAuth credentials file.
 
-```bash
-gcloud auth application-default login
-```
+## Token Management
 
-This will prompt for a new account login.
+### Automatic Token Refresh
+
+- Tokens are automatically refreshed when expired
+- No manual intervention needed
+- Stored securely in system keyring
+
+### Switching Accounts
+
+To use a different Google account:
+
+1. Delete stored tokens:
+   ```bash
+   # Tokens are stored in keyring, or:
+   rm config/tokens.json  # if file-based storage is used
+   ```
+2. Re-authenticate on next use
 
 ## Troubleshooting
 
 ### "No authentication credentials found"
 
-**Solution**: Run `gcloud auth application-default login`
+**Solution**: 
+- Ensure `config/credentials.json` exists with valid OAuth credentials
+- Download OAuth credentials from Google Cloud Console
+
+### "Gmail API scopes are required but not present"
+
+**Solution**: 
+- Gmail API requires OAuth credentials file
+- `gcloud auth application-default login` does not support Gmail scopes
+- Use OAuth credentials file method (see Step 1-4 above)
+
+### "Permission denied" or "403 Forbidden"
+
+**Solutions**:
+1. **Enable Gmail API** in Google Cloud Console
+2. **Configure OAuth Consent Screen** with Gmail scopes
+3. **Add Test Users** (if app is in "Testing" mode)
+4. **Re-authenticate** after making changes
 
 ### "gcloud: command not found"
 
-**Solution**: Install Google Cloud SDK (see Step 1 above)
-
-### "Permission denied" errors
-
-**Solution**: Ensure Gmail API is enabled in your Google Cloud project and you've granted the necessary scopes.
+**Solution**: 
+- Install Google Cloud SDK (optional, not required for Gmail API)
+- Gmail API requires OAuth credentials file, not gcloud
 
 ## Security Notes
 
-- Application Default Credentials are stored securely in your system keyring
+- OAuth credentials are stored locally in `config/credentials.json` (not in git)
+- Tokens are stored securely using system keyring
 - Tokens are automatically refreshed when expired
-- No credentials files need to be committed to git
 - Each user's credentials are isolated
+- Never commit credentials files to version control
+
+## Quick Reference
+
+**For Gmail API:**
+- ✅ OAuth 2.0 credentials file (required)
+- ❌ `gcloud auth application-default login` (does not support Gmail scopes)
+
+**Setup Steps:**
+1. Enable Gmail API in Google Cloud Console
+2. Create OAuth 2.0 credentials (Desktop app)
+3. Configure OAuth consent screen
+4. Place credentials in `config/credentials.json`
+5. First use will prompt for OAuth consent
 
