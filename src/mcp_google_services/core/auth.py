@@ -2,13 +2,15 @@
 
 import os
 import json
+import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.auth import default as google_auth_default
+from google.auth.exceptions import DefaultCredentialsError, RefreshError
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.exceptions import RefreshError
 import keyring
 
 from ..utils.config import Config
@@ -39,6 +41,12 @@ class AuthManager:
 
     def get_credentials(self, user_id: str, scopes: Optional[List[str]] = None) -> Credentials:
         """Get authenticated credentials for a user.
+        
+        Authentication priority:
+        1. Application Default Credentials (from `gcloud auth application-default login`)
+        2. Stored OAuth credentials (from keyring/file)
+        3. OAuth flow with credentials file (if exists)
+        4. Prompt user to run `gcloud auth application-default login`
 
         Args:
             user_id: User email address or identifier
@@ -48,18 +56,38 @@ class AuthManager:
             Authenticated Credentials object
 
         Raises:
-            FileNotFoundError: If credentials file doesn't exist
+            FileNotFoundError: If credentials file doesn't exist and ADC not available
             RefreshError: If token refresh fails
         """
         scopes = scopes or self.GMAIL_SCOPES
         
-        # Try to load existing credentials
+        # Priority 1: Try Application Default Credentials (gcloud auth)
+        try:
+            credentials, project = google_auth_default(scopes=scopes)
+            if credentials and credentials.valid:
+                # Check if we need to refresh to get the right scopes
+                if hasattr(credentials, 'requires_scopes') and credentials.requires_scopes(scopes):
+                    credentials = credentials.with_scopes(scopes)
+                    if credentials.expired:
+                        credentials.refresh(Request())
+                return credentials
+        except DefaultCredentialsError:
+            # ADC not available, continue to other methods
+            pass
+        except Exception as e:
+            # Log but continue
+            import logging
+            logging.debug(f"ADC authentication failed: {e}")
+        
+        # Priority 2: Try to load existing stored credentials
         credentials = self._load_credentials(user_id)
         
         if credentials and credentials.valid:
-            return credentials
+            # Ensure scopes match
+            if set(scopes).issubset(set(credentials.scopes or [])):
+                return credentials
         
-        # Try to refresh expired credentials
+        # Try to refresh expired stored credentials
         if credentials and credentials.expired and credentials.refresh_token:
             try:
                 credentials.refresh(Request())
@@ -69,8 +97,21 @@ class AuthManager:
                 # Refresh failed, need to re-authenticate
                 pass
         
-        # Need to get new credentials
-        return self._authenticate_user(user_id, scopes)
+        # Priority 3: Try OAuth flow with credentials file (if exists)
+        if self.credentials_path.exists():
+            return self._authenticate_user(user_id, scopes)
+        
+        # Priority 4: Prompt user to run gcloud auth
+        raise FileNotFoundError(
+            f"No authentication credentials found.\n\n"
+            "Please authenticate using one of these methods:\n\n"
+            "Option 1 (Recommended - Similar to 'az login'):\n"
+            "  Run: gcloud auth application-default login\n\n"
+            "Option 2 (OAuth credentials file):\n"
+            "  Download OAuth 2.0 credentials from Google Cloud Console\n"
+            f"  and place them in: {self.credentials_path}\n\n"
+            "After authentication, the MCP server will automatically use your credentials."
+        )
 
     def _authenticate_user(self, user_id: str, scopes: List[str]) -> Credentials:
         """Perform OAuth 2.0 authentication flow.
