@@ -63,17 +63,44 @@ class AuthManager:
         
         # Priority 1: Try Application Default Credentials (gcloud auth)
         try:
-            credentials, project = google_auth_default(scopes=scopes)
-            if credentials and credentials.valid:
-                # Check if we need to refresh to get the right scopes
+            # First try without scopes to get existing credentials
+            credentials, project = google_auth_default()
+            
+            if credentials:
+                # If credentials exist but don't have required scopes, we need to request them
+                # For user credentials (not service accounts), we need to use OAuth flow for scopes
                 if hasattr(credentials, 'requires_scopes') and credentials.requires_scopes(scopes):
-                    credentials = credentials.with_scopes(scopes)
-                    if credentials.expired:
-                        credentials.refresh(Request())
+                    # User credentials from gcloud auth don't support adding scopes directly
+                    # We need to use OAuth flow to get credentials with proper scopes
+                    # Check if credentials file exists for OAuth flow
+                    if self.credentials_path.exists():
+                        # Use OAuth flow with proper scopes
+                        return self._authenticate_user(user_id, scopes)
+                    else:
+                        # No OAuth credentials file, raise error with instructions
+                        raise FileNotFoundError(
+                            f"Gmail API scopes are required but not present in current credentials.\n\n"
+                            f"Please authenticate with Gmail scopes using one of these methods:\n\n"
+                            f"Option 1 (OAuth 2.0 with credentials file):\n"
+                            f"  1. Download OAuth 2.0 credentials from Google Cloud Console\n"
+                            f"  2. Place them in: {self.credentials_path}\n"
+                            f"  3. The MCP server will automatically request Gmail scopes\n\n"
+                            f"Option 2 (Re-authenticate with gcloud):\n"
+                            f"  Note: gcloud auth application-default login doesn't support Gmail scopes.\n"
+                            f"  You'll need to use OAuth credentials file for Gmail API access.\n"
+                        )
+                
+                # Credentials have required scopes, check if valid
+                if credentials.expired:
+                    credentials.refresh(Request())
+                
                 return credentials
         except DefaultCredentialsError:
             # ADC not available, continue to other methods
             pass
+        except FileNotFoundError:
+            # Re-raise FileNotFoundError (our custom error with instructions)
+            raise
         except Exception as e:
             # Log but continue
             import logging
