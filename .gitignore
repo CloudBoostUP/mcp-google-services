@@ -222,10 +222,19 @@ mcp-config-*.json
 claude_desktop_config.json
 cursor_mcp.json
 
+# Token files
+config/tokens.json
+config/token*.json
+*.token
+
 # Test files
 test_credentials.json
 test_config.json
 *_test.*
+test_*.mbox
+test_*.json
+test_*.csv
+test_export.*
 
 # Development files
 .env.local
