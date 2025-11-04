@@ -488,7 +488,7 @@ When reporting issues, include:
 
 | Issue | Quick Fix |
 |-------|-----------|
-| Authentication error | Run `gcloud auth application-default login` or set up OAuth credentials |
+| Authentication error | Set up OAuth credentials file (required for Gmail API) |
 | Server not loading | Check MCP configuration and restart Cursor |
 | Rate limit exceeded | Wait and retry, or reduce request rate |
 | No messages in backup | Check query filter and last backup time |
