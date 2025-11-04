@@ -338,3 +338,5 @@ The design uses a **hybrid approach** that tries multiple authentication methods
 **Document Version**: 1.0  
 **Last Updated**: October 28, 2025  
 **Context**: Authentication design clarification for Gmail MCP server
+
+
