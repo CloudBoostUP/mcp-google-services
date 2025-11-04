@@ -56,7 +56,9 @@ class GmailExporter:
         # Generate output path if not provided
         if not output_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_path = f"gmail_export_{timestamp}.{format}"
+            export_folder = Path("exports/gmail")
+            export_folder.mkdir(parents=True, exist_ok=True)
+            output_path = export_folder / f"gmail_export_{timestamp}.{format}"
 
         output_path = Path(output_path)
 
