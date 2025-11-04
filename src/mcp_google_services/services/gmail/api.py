@@ -164,28 +164,15 @@ class GmailAPI(GoogleAPIClient):
         chunk_size = 100
         all_messages = []
         
-        for i in range(0, len(message_ids), chunk_size):
-            chunk = message_ids[i:i + chunk_size]
-            
-            def request_method(*args, **kwargs):
-                return self.messages_service.batchGet(*args, **kwargs)
-            
-            # Use batch get quota cost (counts as one request but processes multiple)
-            original_quota_cost = self.quota_cost
-            self.quota_cost = self.BATCH_GET_QUOTA_COST
-            
+        # Gmail API doesn't have batchGet - fetch individually with rate limiting
+        for msg_id in message_ids:
             try:
-                response = self._execute_request(
-                    request_method,
-                    userId=user_id,
-                    ids=chunk,
-                    format=format,
-                )
-                
-                if "messages" in response:
-                    all_messages.extend(response["messages"])
-            finally:
-                self.quota_cost = original_quota_cost
+                message = self.get_message(user_id=user_id, message_id=msg_id, format=format)
+                all_messages.append(message)
+            except Exception as e:
+                import logging
+                logging.warning(f"Failed to get message {msg_id}: {e}")
+                continue
         
         return all_messages
 

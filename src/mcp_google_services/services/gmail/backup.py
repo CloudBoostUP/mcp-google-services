@@ -78,8 +78,8 @@ class GmailBackup:
             # Build query for new messages
             if not query:
                 if last_backup_time:
-                    # Only get messages after last backup
-                    query = f"after:{int(last_backup_time.timestamp())}"
+                    # Only get messages after last backup (format: YYYY/MM/DD)
+                    query = f"after:{last_backup_time.strftime('%Y/%m/%d')}"
                 else:
                     # First backup - get all messages
                     query = None
@@ -225,22 +225,23 @@ class GmailBackup:
             for i in range(0, len(message_ids), batch_size):
                 batch = message_ids[i:i + batch_size]
                 
-                # Get messages in batch
+                # Get messages in batch (use "full" format for parsing)
                 try:
                     messages = self.api.batch_get_messages(
                         user_id=user_id,
                         message_ids=batch,
-                        format="full",
+                        format="raw",  # Use raw format - MBOXGenerator handles it directly
                     )
                     
-                    # Parse and add to MBOX
+                    # Add messages directly to MBOX (MBOXGenerator handles raw format)
                     for message in messages:
                         try:
-                            parsed = self.parser.parse_message(message)
-                            mbox.add_message(parsed)
+                            mbox.add_message(message)  # Pass raw message directly
                             messages_processed += 1
                         except Exception as e:
                             messages_failed += 1
+                            import logging
+                            logging.warning(f"Failed to process message {message.get('id', 'unknown')}: {e}")
                             # Continue with next message
                             continue
                             

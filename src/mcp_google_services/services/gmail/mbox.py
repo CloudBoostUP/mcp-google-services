@@ -50,11 +50,49 @@ class MBOXGenerator:
         """Add a message to the MBOX file.
 
         Args:
-            message: Parsed message dictionary (from EmailParser)
+            message: Either a parsed message dictionary (from EmailParser) or raw Gmail API message with 'raw' field
         """
         if self.file is None:
             self.open()
 
+        # If message has raw field, use it directly (from Gmail API raw format)
+        if "raw" in message and message.get("raw"):
+            import base64
+            import email
+            try:
+                # Decode raw message
+                raw_bytes = base64.urlsafe_b64decode(message["raw"])
+                
+                # Parse raw message to extract From header
+                from_email = "unknown@unknown"
+                try:
+                    email_msg = email.message_from_bytes(raw_bytes)
+                    from_header = email_msg.get("From", "")
+                    if from_header:
+                        from_email = self._extract_email(from_header) or "unknown@unknown"
+                except Exception:
+                    pass
+                
+                # Generate "From " separator line
+                from email.utils import formatdate
+                from_line = f"From {from_email}  {formatdate()}\n"
+                self.file.write(from_line.encode(self.encoding))
+                
+                # Write raw message content
+                self.file.write(raw_bytes)
+                if not raw_bytes.endswith(b"\n"):
+                    self.file.write(b"\n")
+                self.file.write(b"\n")  # Empty line separator
+                
+                self.message_count += 1
+                return
+            except Exception as e:
+                # Fall through to parsed message handling
+                import logging
+                logging.warning(f"Failed to write raw message: {e}")
+                pass
+        
+        # Fallback: use parsed message format
         # Generate "From " separator line (RFC 4155)
         from_line = self._format_from_line(message)
         self.file.write(from_line.encode(self.encoding))
@@ -108,7 +146,7 @@ class MBOXGenerator:
         Returns:
             RFC 822 formatted message bytes
         """
-        from ..parser import EmailParser
+        from .parser import EmailParser
         
         # Convert to RFC 822 format
         rfc822_bytes = EmailParser.to_rfc822(message)

@@ -96,7 +96,7 @@ if __name__ == "__main__":
     print("=" * 80 + "\n")
     
     test1 = test_server_initialization()
-    test2 = test_tool_schemas()
+    test2 = test_module_imports()
     
     if test1 and test2:
         print("\n✅ All tests passed!")

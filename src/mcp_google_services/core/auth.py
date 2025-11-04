@@ -20,9 +20,9 @@ class AuthManager:
     """Manages OAuth 2.0 authentication for Google APIs."""
 
     # Gmail API scopes
+    # Note: gmail.metadata doesn't support query parameters, so we use readonly for full access
     GMAIL_SCOPES = [
         "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.metadata",
     ]
 
     def __init__(self, config: Optional[Config] = None):
