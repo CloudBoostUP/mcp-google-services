@@ -1,0 +1,23 @@
+#!/bin/bash
+# Gmail backup wrapper script for cron
+# Copy this file to run_backup.sh and customize paths
+
+# Set working directory (update to your actual path)
+cd /path/to/mcp-google-services
+
+# Activate virtual environment (if using venv)
+# Uncomment if using virtual environment:
+# source .venv/bin/activate
+
+# Set environment variables
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/config/credentials.json"
+export PYTHONPATH="$(pwd)/src"
+
+# Run backup
+# Options:
+#   --type incremental  : Only backup new messages (default)
+#   --type full         : Full backup of all messages
+#   --max-results N     : Limit number of messages
+#   --query "QUERY"     : Gmail search query filter
+python scripts/backup_gmail.py --type incremental >> logs/backup.log 2>&1
+
