@@ -1,5 +1,8 @@
 """Gmail API client for email operations."""
 
+import base64
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import List, Optional, Dict, Any
 from google.oauth2.credentials import Credentials
 
@@ -240,6 +243,88 @@ class GmailAPI(GoogleAPIClient):
                 request_method,
                 userId=user_id,
                 id=label_id,
+            )
+            return response
+        finally:
+            self.quota_cost = original_quota_cost
+
+    def send_message(
+        self,
+        user_id: str = "me",
+        to: str = None,
+        subject: str = None,
+        body: str = None,
+        body_html: Optional[str] = None,
+        cc: Optional[List[str]] = None,
+        bcc: Optional[List[str]] = None,
+        reply_to: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Send an email message via Gmail API.
+
+        Args:
+            user_id: User's email address or 'me' (default: 'me')
+            to: Recipient email address (required)
+            subject: Email subject (required)
+            body: Plain text email body (required if body_html not provided)
+            body_html: HTML email body (optional, if provided will be used instead of body)
+            cc: List of CC email addresses (optional)
+            bcc: List of BCC email addresses (optional)
+            reply_to: Reply-To email address (optional)
+
+        Returns:
+            Dictionary with message ID and thread ID
+
+        Raises:
+            ValueError: If required parameters are missing
+
+        Example:
+            >>> api = GmailAPI(credentials)
+            >>> result = api.send_message(
+            ...     to="recipient@example.com",
+            ...     subject="Hello",
+            ...     body="This is a test email"
+            ... )
+        """
+        if not to:
+            raise ValueError("'to' email address is required")
+        if not subject:
+            raise ValueError("'subject' is required")
+        if not body and not body_html:
+            raise ValueError("Either 'body' or 'body_html' is required")
+
+        # Create message
+        if body_html:
+            message = MIMEMultipart('alternative')
+            message.attach(MIMEText(body or '', 'plain'))
+            message.attach(MIMEText(body_html, 'html'))
+        else:
+            message = MIMEText(body, 'plain')
+
+        message['To'] = to
+        message['Subject'] = subject
+
+        if cc:
+            message['Cc'] = ', '.join(cc)
+        if bcc:
+            message['Bcc'] = ', '.join(bcc)
+        if reply_to:
+            message['Reply-To'] = reply_to
+
+        # Encode message in base64url format
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+
+        def request_method(*args, **kwargs):
+            return self.messages_service.send(*args, **kwargs)
+
+        # Send message quota cost is 100 units
+        original_quota_cost = self.quota_cost
+        self.quota_cost = 100
+
+        try:
+            response = self._execute_request(
+                request_method,
+                userId=user_id,
+                body={'raw': raw_message}
             )
             return response
         finally:

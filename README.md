@@ -21,6 +21,7 @@ This MCP server enables:
 - ✅ **Multiple Export Formats**: MBOX, JSON, CSV, EML
 - ✅ **Label Management**: List and filter by Gmail labels
 - ✅ **Message Search**: Query messages with Gmail search syntax
+- ✅ **Send Emails**: Send email messages via Gmail API
 - ✅ **Rate Limiting**: Intelligent API quota management
 - ✅ **Authentication**: OAuth 2.0 with Application Default Credentials support
 
@@ -133,6 +134,13 @@ Once the server is configured, you can use natural language commands:
 "Export recent messages to MBOX"
 ```
 
+#### Send Email Messages
+```
+"Send an email to recipient@example.com"
+"Send email with subject 'Hello' and body 'Test message'"
+"Send email with CC and BCC recipients"
+```
+
 ### MCP Tool Reference
 
 #### `gmail_list_labels`
@@ -214,6 +222,32 @@ Export Gmail messages to various formats.
 }
 ```
 
+#### `gmail_send_message`
+Send an email message via Gmail API.
+
+**Parameters:**
+- `user_id` (string, optional): Gmail user ID (default: "me")
+- `to` (string, required): Recipient email address
+- `subject` (string, required): Email subject
+- `body` (string, optional): Plain text email body (required if body_html not provided)
+- `body_html` (string, optional): HTML email body (optional, if provided will be used instead of body)
+- `cc` (array, optional): List of CC email addresses
+- `bcc` (array, optional): List of BCC email addresses
+- `reply_to` (string, optional): Reply-To email address
+
+**Example:**
+```json
+{
+  "tool": "gmail_send_message",
+  "arguments": {
+    "to": "recipient@example.com",
+    "subject": "Hello",
+    "body": "This is a test email",
+    "cc": ["cc@example.com"]
+  }
+}
+```
+
 ## 📁 Project Structure
 
 ```
@@ -289,7 +323,6 @@ export MCP_GMAIL__BACKUP_FOLDER="backups/gmail"
 ## 📚 Documentation
 
 - [**Authentication Guide**](docs/AUTHENTICATION.md) - Detailed authentication setup
-- [**Usage Guide**](USAGE.md) - How to use MCP tools in Cursor
 - [**Gmail API Integration**](docs/services/GMAIL_API.md) - Gmail API integration details
 - [**MBOX Generation Process**](docs/services/MBOX_GENERATION.md) - How MBOX files are created
 - [**Backup System**](docs/services/BACKUP_SYSTEM.md) - Incremental vs full backup explained

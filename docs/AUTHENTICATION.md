@@ -31,9 +31,14 @@ The Google Services MCP Server requires OAuth 2.0 authentication for Gmail API a
    - User support email: Your email
    - Developer contact: Your email
 3. Add scopes:
-   - `https://www.googleapis.com/auth/gmail.readonly`
+   - `https://www.googleapis.com/auth/gmail.readonly` (for reading emails)
+   - `https://www.googleapis.com/auth/gmail.send` (for sending emails)
 4. Add test users (if app is in "Testing" mode):
-   - Add your Gmail address as a test user
+   - Scroll to "Test users" section
+   - Click "+ ADD USERS"
+   - Enter your Gmail address
+   - Click "ADD"
+   - **Important**: This step is required for apps in "Testing" mode
 
 ### Step 3: Place Credentials File
 

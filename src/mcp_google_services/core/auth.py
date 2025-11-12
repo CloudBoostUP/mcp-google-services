@@ -23,6 +23,7 @@ class AuthManager:
     # Note: gmail.metadata doesn't support query parameters, so we use readonly for full access
     GMAIL_SCOPES = [
         "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.send",
     ]
 
     def __init__(self, config: Optional[Config] = None):
@@ -61,68 +62,67 @@ class AuthManager:
         """
         scopes = scopes or self.GMAIL_SCOPES
         
-        # Priority 1: Try Application Default Credentials (gcloud auth)
-        try:
-            # First try without scopes to get existing credentials
-            credentials, project = google_auth_default()
+        # Priority 1: If credentials.json exists, use OAuth flow (Gmail API requires OAuth scopes)
+        # Gmail API doesn't work with Application Default Credentials (gcloud auth)
+        # because ADC doesn't support Gmail scopes
+        if self.credentials_path.exists():
+            # Try to load existing stored OAuth credentials first
+            credentials = self._load_credentials(user_id)
             
-            if credentials:
-                # If credentials exist but don't have required scopes, we need to request them
-                # For user credentials (not service accounts), we need to use OAuth flow for scopes
-                if hasattr(credentials, 'requires_scopes') and credentials.requires_scopes(scopes):
-                    # User credentials from gcloud auth don't support adding scopes directly
-                    # We need to use OAuth flow to get credentials with proper scopes
-                    # Check if credentials file exists for OAuth flow
-                    if self.credentials_path.exists():
-                        # Use OAuth flow with proper scopes
-                        return self._authenticate_user(user_id, scopes)
-                    else:
-                        # No OAuth credentials file, raise error with instructions
-                        raise FileNotFoundError(
-                            f"Gmail API scopes are required but not present in current credentials.\n\n"
-                            f"Please authenticate with Gmail scopes using one of these methods:\n\n"
-                            f"Option 1 (OAuth 2.0 with credentials file):\n"
-                            f"  1. Download OAuth 2.0 credentials from Google Cloud Console\n"
-                            f"  2. Place them in: {self.credentials_path}\n"
-                            f"  3. The MCP server will automatically request Gmail scopes\n\n"
-                            f"Option 2 (Re-authenticate with gcloud):\n"
-                            f"  Note: gcloud auth application-default login doesn't support Gmail scopes.\n"
-                            f"  You'll need to use OAuth credentials file for Gmail API access.\n"
-                        )
-                
-                # Credentials have required scopes, check if valid
-                if credentials.expired:
+            if credentials and credentials.valid:
+                # Check if credentials have required scopes
+                existing_scopes = set(credentials.scopes or [])
+                required_scopes = set(scopes)
+                if required_scopes.issubset(existing_scopes):
+                    return credentials
+                else:
+                    # Missing scopes, delete and re-authenticate
+                    import logging
+                    missing_scopes = required_scopes - existing_scopes
+                    logging.info(f"Missing scopes: {missing_scopes}. Re-authenticating...")
+                    self._delete_credentials(user_id)
+            
+            # Try to refresh expired credentials
+            if credentials and credentials.expired and credentials.refresh_token:
+                try:
                     credentials.refresh(Request())
-                
-                return credentials
+                    existing_scopes = set(credentials.scopes or [])
+                    required_scopes = set(scopes)
+                    if required_scopes.issubset(existing_scopes):
+                        self._save_credentials(user_id, credentials)
+                        return credentials
+                    else:
+                        self._delete_credentials(user_id)
+                except RefreshError:
+                    pass
+            
+            # No valid credentials or missing scopes - start OAuth flow
+            return self._authenticate_user(user_id, scopes)
+        
+        # Priority 2: Try Application Default Credentials (fallback for non-Gmail APIs)
+        try:
+            credentials, project = google_auth_default()
+            if credentials:
+                existing_scopes = set(getattr(credentials, 'scopes', []) or [])
+                required_scopes = set(scopes)
+                if required_scopes.issubset(existing_scopes):
+                    if credentials.expired:
+                        credentials.refresh(Request())
+                    return credentials
+                else:
+                    raise FileNotFoundError(
+                        f"Gmail API requires OAuth 2.0 credentials file.\n\n"
+                        f"Please download OAuth 2.0 credentials from Google Cloud Console\n"
+                        f"and place them in: {self.credentials_path}\n\n"
+                        f"Note: gcloud auth application-default login doesn't support Gmail scopes.\n"
+                    )
         except DefaultCredentialsError:
-            # ADC not available, continue to other methods
             pass
         except FileNotFoundError:
-            # Re-raise FileNotFoundError (our custom error with instructions)
             raise
         except Exception as e:
-            # Log but continue
             import logging
             logging.debug(f"ADC authentication failed: {e}")
-        
-        # Priority 2: Try to load existing stored credentials
-        credentials = self._load_credentials(user_id)
-        
-        if credentials and credentials.valid:
-            # Ensure scopes match
-            if set(scopes).issubset(set(credentials.scopes or [])):
-                return credentials
-        
-        # Try to refresh expired stored credentials
-        if credentials and credentials.expired and credentials.refresh_token:
-            try:
-                credentials.refresh(Request())
-                self._save_credentials(user_id, credentials)
-                return credentials
-            except RefreshError:
-                # Refresh failed, need to re-authenticate
-                pass
         
         # Priority 3: Try OAuth flow with credentials file (if exists)
         if self.credentials_path.exists():
@@ -302,6 +302,36 @@ class AuthManager:
         with open(self.token_store_path, "w") as f:
             json.dump(all_tokens, f, indent=2)
 
+    def _delete_credentials(self, user_id: str) -> None:
+        """Delete stored credentials for a user (without revoking).
+
+        Args:
+            user_id: User email address
+        """
+        # Remove from keyring
+        try:
+            keyring.delete_password(self.keyring_service, user_id)
+        except Exception:
+            pass
+        
+        # Remove from file
+        if self.token_store_path.exists():
+            try:
+                with open(self.token_store_path, "r") as f:
+                    all_tokens = json.load(f)
+                
+                if user_id in all_tokens:
+                    del all_tokens[user_id]
+                    
+                    if all_tokens:
+                        with open(self.token_store_path, "w") as f:
+                            json.dump(all_tokens, f, indent=2)
+                    else:
+                        # File is empty, delete it
+                        self.token_store_path.unlink()
+            except Exception:
+                pass
+
     def revoke_credentials(self, user_id: str) -> None:
         """Revoke and remove credentials for a user.
 
@@ -316,20 +346,6 @@ class AuthManager:
             except Exception:
                 pass
         
-        # Remove from keyring
-        try:
-            keyring.delete_password(self.keyring_service, user_id)
-        except Exception:
-            pass
-        
-        # Remove from file
-        if self.token_store_path.exists():
-            try:
-                with open(self.token_store_path, "r") as f:
-                    all_tokens = json.load(f)
-                all_tokens.pop(user_id, None)
-                with open(self.token_store_path, "w") as f:
-                    json.dump(all_tokens, f, indent=2)
-            except Exception:
-                pass
+        # Remove from storage
+        self._delete_credentials(user_id)
 
