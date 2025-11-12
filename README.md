@@ -82,6 +82,45 @@ pip install -r requirements.txt
 
 Add to your Cursor MCP configuration (`~/.cursor/mcp.json` or `.vscode/mcp.json`):
 
+#### Option A: Quick Start (Recommended - No Local Clone Required)
+
+Use `pipx` to run directly from GitHub (similar to `npx` for npm packages):
+
+```json
+{
+  "mcpServers": {
+    "google-services": {
+      "command": "pipx",
+      "args": [
+        "run",
+        "--spec",
+        "git+https://github.com/CloudBoostUP/mcp-google-services.git",
+        "python",
+        "-m",
+        "mcp_google_services.server"
+      ],
+      "env": {
+        "GOOGLE_APIS_CREDENTIALS_PATH": "/path/to/your/config/credentials.json"
+      }
+    }
+  }
+}
+```
+
+**Prerequisites for Option A:**
+- Install `pipx` if not already installed:
+  ```bash
+  python3 -m pip install --user pipx
+  ```
+- Place your OAuth credentials file in a location accessible to the MCP server
+- Set the `GOOGLE_APIS_CREDENTIALS_PATH` environment variable to point to your credentials file
+
+**Note:** When using `pipx run`, the server runs from a temporary virtual environment. Use the `env` section in the MCP configuration to specify the absolute path to your credentials file.
+
+#### Option B: Local Development Setup
+
+If you want to clone and develop locally:
+
 ```json
 {
   "mcpServers": {
@@ -96,6 +135,14 @@ Add to your Cursor MCP configuration (`~/.cursor/mcp.json` or `.vscode/mcp.json`
   }
 }
 ```
+
+**Prerequisites for Option B:**
+- Clone the repository:
+  ```bash
+  git clone https://github.com/CloudBoostUP/mcp-google-services.git
+  cd mcp-google-services
+  pip install -r requirements.txt
+  ```
 
 Restart Cursor to load the MCP server.
 
