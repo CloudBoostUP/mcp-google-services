@@ -94,12 +94,44 @@ This guide helps you resolve common issues with the Google Services MCP Server.
 2. **Configure OAuth Consent Screen:**
    - Go to "APIs & Services" > "OAuth consent screen"
    - Fill in required information
-   - Add scopes: `https://www.googleapis.com/auth/gmail.readonly`
+   - Add scopes: `https://www.googleapis.com/auth/gmail.readonly`, `https://www.googleapis.com/auth/gmail.send`
    - Add test users (if app is in testing mode)
 
 3. **Verify App Status:**
    - For testing: App must be in "Testing" mode with test users added
    - For production: App must be verified by Google
+
+### Error: "access_denied" - OAuth Consent Screen
+
+**Symptoms:**
+- Error 403: access_denied
+- Message: "Gmail MCP Server has not completed the Google verification process"
+- OAuth flow fails during consent
+
+**Causes:**
+- OAuth consent screen is in "Testing" mode
+- Your email address not added as a test user
+- App not verified (for production apps)
+
+**Solutions:**
+
+1. **Add Yourself as Test User (Quick Fix - 2 minutes):**
+   - Go to [Google Cloud Console OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
+   - Scroll down to **"Test users"** section
+   - Click **"+ ADD USERS"**
+   - Enter your Gmail address (the one you want to use)
+   - Click **"ADD"**
+   - Try authentication again - it should work now! ✅
+
+2. **Verify Test Users:**
+   - Ensure your email is listed in test users
+   - Remove and re-add if needed
+   - Wait a few seconds for changes to propagate
+
+3. **For Production Use:**
+   - Submit app for Google verification
+   - Complete verification process
+   - App will be available to all users
 
 ## MCP Server Issues
 

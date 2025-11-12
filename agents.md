@@ -196,10 +196,42 @@ Adds examples for time-based and count-based retention policies.
 
 ### Adding New MCP Tools
 1. Implement tool function in appropriate service module
-2. Register tool in `server.py`
+2. Register tool in `server.py` (both `list_tools()` and `call_tool()` handlers)
 3. Add tool documentation
 4. Create tests for the tool
 5. Update usage examples
+
+### Gmail Send Message Feature
+
+**Status:** ✅ Implemented (November 2025)
+
+**Implementation Details:**
+- Added `send_message()` method to `GmailAPI` class (`src/mcp_google_services/services/gmail/api.py`)
+- Added `gmail.send` scope to authentication (`src/mcp_google_services/core/auth.py`)
+- Added `gmail_send_message` MCP tool to `server.py`
+- Supports plain text and HTML emails
+- Supports CC, BCC, and Reply-To headers
+
+**Usage:**
+```python
+# Via MCP tool
+{
+  "tool": "gmail_send_message",
+  "arguments": {
+    "to": "recipient@example.com",
+    "subject": "Test Email",
+    "body": "Email body text",
+    "cc": ["cc@example.com"],
+    "bcc": ["bcc@example.com"]
+  }
+}
+```
+
+**Important Notes:**
+- Requires `gmail.send` scope in OAuth credentials
+- Quota cost: 100 units per email sent
+- Email is sent immediately (no draft creation)
+- Supports both plain text and HTML body formats
 
 ## Troubleshooting
 
@@ -215,6 +247,17 @@ Adds examples for time-based and count-based retention policies.
 - **Gmail API Documentation**: https://developers.google.com/gmail/api
 - **Python Type Hints**: https://docs.python.org/3/library/typing.html
 - **PEP 8 Style Guide**: https://pep8.org/
+
+---
+
+## Available MCP Tools
+
+### Gmail Tools
+- `gmail_backup` - Backup Gmail messages to MBOX format
+- `gmail_export` - Export Gmail messages to various formats (MBOX, JSON, CSV, EML)
+- `gmail_list_messages` - List Gmail messages with optional filtering
+- `gmail_list_labels` - List all Gmail labels for a user
+- `gmail_send_message` - Send email messages via Gmail API (NEW - November 2025)
 
 ---
 
